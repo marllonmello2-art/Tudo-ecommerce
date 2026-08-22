@@ -1,0 +1,89 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "07f9b2d7-b4d0-4e5c-9693-b95039f1c11d",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "tables": {
+    "ads": {
+      "name": "ads",
+      "columns": {
+        "id": { "name": "id", "type": "text", "primaryKey": true, "notNull": true, "autoincrement": false },
+        "product_id": { "name": "product_id", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "created_by": { "name": "created_by", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "created_at": { "name": "created_at", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false, "default": "CURRENT_TIMESTAMP" },
+        "title": { "name": "title", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "description": { "name": "description", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "bullets_json": { "name": "bullets_json", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "platform": { "name": "platform", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "status": { "name": "status", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false, "default": "'draft'" }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "pricing_simulations": {
+      "name": "pricing_simulations",
+      "columns": {
+        "id": { "name": "id", "type": "text", "primaryKey": true, "notNull": true, "autoincrement": false },
+        "created_by": { "name": "created_by", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "created_at": { "name": "created_at", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false, "default": "CURRENT_TIMESTAMP" },
+        "platform": { "name": "platform", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "cost": { "name": "cost", "type": "real", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "margin": { "name": "margin", "type": "real", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "fee": { "name": "fee", "type": "real", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "fixed": { "name": "fixed", "type": "real", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "shipping": { "name": "shipping", "type": "real", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "recommended_price": { "name": "recommended_price", "type": "real", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "net": { "name": "net", "type": "real", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "profit": { "name": "profit", "type": "real", "primaryKey": false, "notNull": true, "autoincrement": false }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "products": {
+      "name": "products",
+      "columns": {
+        "id": { "name": "id", "type": "text", "primaryKey": true, "notNull": true, "autoincrement": false },
+        "created_by": { "name": "created_by", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "created_at": { "name": "created_at", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false, "default": "CURRENT_TIMESTAMP" },
+        "updated_at": { "name": "updated_at", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false, "default": "CURRENT_TIMESTAMP" },
+        "image_key": { "name": "image_key", "type": "text", "primaryKey": false, "notNull": false, "autoincrement": false },
+        "image_mime": { "name": "image_mime", "type": "text", "primaryKey": false, "notNull": false, "autoincrement": false },
+        "identified_as": { "name": "identified_as", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "analysis_json": { "name": "analysis_json", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "status": { "name": "status", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false, "default": "'analyzed'" }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "profiles": {
+      "name": "profiles",
+      "columns": {
+        "email": { "name": "email", "type": "text", "primaryKey": true, "notNull": true, "autoincrement": false },
+        "display_name": { "name": "display_name", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false },
+        "photo_key": { "name": "photo_key", "type": "text", "primaryKey": false, "notNull": false, "autoincrement": false },
+        "photo_mime": { "name": "photo_mime", "type": "text", "primaryKey": false, "notNull": false, "autoincrement": false },
+        "photo_data": { "name": "photo_data", "type": "text", "primaryKey": false, "notNull": false, "autoincrement": false },
+        "created_at": { "name": "created_at", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false, "default": "CURRENT_TIMESTAMP" },
+        "updated_at": { "name": "updated_at", "type": "text", "primaryKey": false, "notNull": true, "autoincrement": false, "default": "CURRENT_TIMESTAMP" }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": { "schemas": {}, "tables": {}, "columns": {} },
+  "internal": { "indexes": {} }
+}
