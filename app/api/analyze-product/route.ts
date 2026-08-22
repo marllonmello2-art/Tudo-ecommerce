@@ -125,43 +125,41 @@ export async function POST(request: Request) {
   const dimensions = readImageDimensions(imageBytes, detectedType);
   if (!dimensions || dimensions.width < 500 || dimensions.height < 500) return Response.json({ code: "IMAGE_RESOLUTION_LOW", error: "Use uma imagem com pelo menos 500 × 500 pixels para a análise." }, { status: 422 });
 
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    console.error("[analyze-product] OPENAI_API_KEY is not configured", { stage: "configuration" });
-    return Response.json({ code: "VISION_NOT_CONFIGURED", error: "A análise visual real ainda não está configurada. Cadastre OPENAI_API_KEY no ambiente de produção." }, { status: 503 });
+    console.error("[analyze-product] GEMINI_API_KEY is not configured", { stage: "configuration" });
+    return Response.json({ code: "VISION_NOT_CONFIGURED", error: "A análise visual real ainda não está configurada. Cadastre GEMINI_API_KEY no ambiente de produção." }, { status: 503 });
   }
 
   let binary = "";
   for (const byte of imageBytes) binary += String.fromCharCode(byte);
   const imageData = btoa(binary);
-  const model = process.env.OPENAI_VISION_MODEL || "gpt-4o-mini";
+  const model = process.env.GEMINI_VISION_MODEL || "gemini-2.5-flash";
   const payload = {
-    model,
-    temperature: 0.2,
-    response_format: { type: "json_object" },
-    messages: [
-      {
-        role: "system",
-        content: "Você analisa fotos de produtos para comércio eletrônico no Brasil. Responda somente JSON válido. Não invente marca, medidas, EAN, NCM ou CEST. Quando algo não estiver legível, use 'A confirmar'. NCM e CEST devem sempre ser 'A confirmar' porque a classificação fiscal exige validação especializada.",
-      },
+    systemInstruction: {
+      parts: [{
+        text: "Você analisa fotos de produtos para comércio eletrônico no Brasil. Responda somente JSON válido. Não invente marca, medidas, EAN, NCM ou CEST. Quando algo não estiver legível, use 'A confirmar'. NCM e CEST devem sempre ser 'A confirmar' porque a classificação fiscal exige validação especializada.",
+      }],
+    },
+    contents: [
       {
         role: "user",
-        content: [
+        parts: [
           {
-            type: "text",
             text: `Analise a imagem deste produto para a plataforma ${platform}. Identifique o produto pelo conteúdo visual, leia apenas textos realmente visíveis na embalagem e gere o anúncio preliminar. Retorne exatamente este formato JSON: {"identifiedAs":"string","confidence":"alta|média|baixa e motivo","ean":"string ou vazio","title":"string","description":"string","bullets":["string"],"technicalSheet":[{"label":"string","value":"string"}],"fiscal":{"ncm":"A confirmar","ncmNote":"string","cest":"A confirmar","cestNote":"string"},"price":{"minimum":0,"average":0,"maximum":0,"note":"string"}}. A faixa de preço é apenas estimativa preliminar, não consulta atual de mercado.`,
           },
-          { type: "image_url", image_url: { url: `data:${detectedType};base64,${imageData}`, detail: "high" } },
+          { inlineData: { mimeType: detectedType, data: imageData } },
         ],
       },
     ],
+    generationConfig: { temperature: 0.2, responseMimeType: "application/json" },
   };
 
   let response: Response;
   try {
-    response = await fetch("https://api.openai.com/v1/chat/completions", {
+    response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
       method: "POST",
-      headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
+      headers: { "x-goog-api-key": apiKey, "content-type": "application/json" },
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(30000),
     });
@@ -172,23 +170,23 @@ export async function POST(request: Request) {
 
   if (!response.ok) {
     console.error("[analyze-product] provider returned an error", { stage: "provider-response", status: response.status, model });
-    if (response.status === 429) return Response.json({ code: "VISION_QUOTA", error: "O provedor de visão atingiu o limite de uso. Tente novamente mais tarde." }, { status: 429 });
-    if (response.status === 401 || response.status === 403) return Response.json({ code: "VISION_AUTH_ERROR", error: "A credencial da análise visual foi recusada. Revise OPENAI_API_KEY." }, { status: 502 });
+    if (response.status === 429) return Response.json({ code: "VISION_QUOTA", error: "O provedor de visão atingiu o limite gratuito de uso. Tente novamente em alguns minutos." }, { status: 429 });
+    if (response.status === 400 || response.status === 401 || response.status === 403) return Response.json({ code: "VISION_AUTH_ERROR", error: "A credencial da análise visual foi recusada. Revise GEMINI_API_KEY." }, { status: 502 });
     return Response.json({ code: "VISION_PROVIDER_ERROR", error: `O provedor de visão respondeu com status ${response.status}.` }, { status: 502 });
   }
 
-  let body: { choices?: { message?: { content?: unknown } }[] };
+  let body: { candidates?: { content?: { parts?: { text?: unknown }[] } }[] };
   try {
-    body = await response.json() as { choices?: { message?: { content?: unknown } }[] };
+    body = await response.json() as { candidates?: { content?: { parts?: { text?: unknown }[] } }[] };
   } catch (error) {
     logVisionFailure("provider-json", error, { model });
     return Response.json({ code: "VISION_INVALID_RESPONSE", error: "O provedor de visão retornou uma resposta inválida." }, { status: 502 });
   }
-  const parsed = parseModelJson(body.choices?.[0]?.message?.content);
+  const parsed = parseModelJson(body.candidates?.[0]?.content?.parts?.[0]?.text);
   if (!parsed) {
     console.error("[analyze-product] provider returned no valid analysis JSON", { stage: "provider-json-shape", model });
     return Response.json({ code: "VISION_INVALID_JSON", error: "A análise visual não retornou o JSON esperado." }, { status: 502 });
   }
 
-  return Response.json({ analysis: normalizeAnalysis(parsed), source: "openai-vision", model, analyzedAt: new Date().toISOString() });
+  return Response.json({ analysis: normalizeAnalysis(parsed), source: "gemini-vision", model, analyzedAt: new Date().toISOString() });
 }
