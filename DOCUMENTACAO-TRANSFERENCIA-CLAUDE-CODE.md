@@ -28,15 +28,16 @@ npm run lint
 Configure as credenciais somente no ambiente seguro do servidor:
 
 - `SERPAPI_KEY`: Google Trends e busca de imagens.
-- `OPENAI_API_KEY`: análise visual real dos produtos.
-- `OPENAI_VISION_MODEL`: opcional; padrão `gpt-4o-mini`.
+- `GEMINI_API_KEY`: análise visual real dos produtos, via Google Gemini
+  (camada gratuita disponível no Google AI Studio, sem cartão de crédito).
+- `GEMINI_VISION_MODEL`: opcional; padrão `gemini-2.5-flash`.
 
 Bindings necessários:
 
 - D1: `DB`.
 - R2: `BUCKET`.
 
-Não há chaves secretas incluídas neste pacote. Na última auditoria da produção, `SERPAPI_KEY` e `OPENAI_API_KEY` ainda não estavam cadastradas; por isso o sistema mostra configuração pendente em vez de inventar dados.
+Não há chaves secretas incluídas neste pacote. Na última auditoria da produção, `SERPAPI_KEY` e `GEMINI_API_KEY` ainda não estavam cadastradas; por isso o sistema mostra configuração pendente em vez de inventar dados.
 
 ## Tendências
 
