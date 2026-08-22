@@ -97,8 +97,9 @@ email forwarded by the session.
 Production secrets are configured in the Site's production environment settings;
 they do not belong in `.openai/hosting.json` or in client-side code:
 
-- `OPENAI_API_KEY`: enables real multimodal product analysis;
-- `OPENAI_VISION_MODEL`: optional model override, default `gpt-4o-mini`;
+- `GEMINI_API_KEY`: enables real multimodal product analysis via Google Gemini
+  (free tier available from Google AI Studio, no credit card required);
+- `GEMINI_VISION_MODEL`: optional model override, default `gemini-2.5-flash`;
 - `SERPAPI_KEY`: enables commercial image search through Google Images/SerpApi.
 
 The D1 and R2 logical bindings are already declared as `DB` and `BUCKET`. The
