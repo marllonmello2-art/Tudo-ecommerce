@@ -46,3 +46,8 @@ next-env.d.ts
 .dev.vars
 .dev.vars.*
 !.dev.vars.example
+
+# Lockfile gerado localmente pelo npm install; o pipeline de build do Sites
+# resolve as dependências por conta própria e o repositório nunca versionou
+# este arquivo.
+/package-lock.json
