@@ -80,11 +80,37 @@ echo "Banco pronto: $D1_NAME ($D1_ID)"
 
 # ----------------------------------------------------------------- bucket R2
 step "Garantindo o bucket R2 \"$R2_BUCKET\""
-if wrangler r2 bucket info "$R2_BUCKET" >/dev/null 2>&1; then
+
+bucket_exists() {
+  wrangler r2 bucket info "$R2_BUCKET" >/dev/null 2>&1 && return 0
+  wrangler r2 bucket list 2>/dev/null | grep -q "$R2_BUCKET"
+}
+
+if bucket_exists; then
   echo "Bucket já existe."
 else
-  # `bucket create` falha se o bucket já existir; a mensagem é informativa.
-  wrangler r2 bucket create "$R2_BUCKET" || echo "Bucket já existente ou criado por outra execução."
+  # `bucket create` falha se o bucket já existir ou se o R2 não estiver
+  # habilitado na conta; nos dois casos seguimos e checamos logo abaixo.
+  wrangler r2 bucket create "$R2_BUCKET" || true
+fi
+
+if bucket_exists; then
+  export PORTAL_R2_ENABLED=1
+else
+  # O R2 precisa ser habilitado uma vez no painel da Cloudflare. Sem ele o
+  # portal publica igual: só o upload de imagem fica indisponível (dá para
+  # colar URLs de capa no editor) até a próxima publicação.
+  export PORTAL_R2_ENABLED=0
+  cat <<'MSG'
+
+AVISO: não consegui usar o bucket R2.
+  Provavelmente o R2 ainda não foi habilitado nesta conta Cloudflare
+  (dashboard > R2 > "Enable R2"). Vou publicar o portal SEM o bucket:
+  tudo funciona, menos o upload de imagem pelo painel — enquanto isso, dá
+  para colar a URL da capa no editor. Depois de habilitar o R2, é só
+  publicar de novo que o bucket entra sozinho.
+
+MSG
 fi
 
 # --------------------------------------------------------------------- build

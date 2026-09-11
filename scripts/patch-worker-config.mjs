@@ -16,6 +16,9 @@ const {
   PORTAL_D1_NAME: databaseName = "diario-mello",
   PORTAL_D1_ID: databaseId,
   PORTAL_R2_BUCKET: bucketName = "diario-mello-midia",
+  // "0" quando o R2 ainda não está habilitado na conta: publicamos sem o
+  // binding em vez de deixar o deploy inteiro falhar.
+  PORTAL_R2_ENABLED: r2Enabled = "1",
 } = process.env;
 
 if (!databaseId) {
@@ -29,7 +32,8 @@ config.name = workerName;
 config.topLevelName = workerName;
 config.workers_dev = true;
 config.d1_databases = [{ binding: "DB", database_name: databaseName, database_id: databaseId }];
-config.r2_buckets = [{ binding: "BUCKET", bucket_name: bucketName }];
+config.r2_buckets =
+  r2Enabled === "0" ? [] : [{ binding: "BUCKET", bucket_name: bucketName }];
 
 // O cron de 6 em 6 horas pertence ao painel de ecommerce (snapshots de
 // tendências). Numa publicação só do portal ele não tem o que fazer.
@@ -39,4 +43,4 @@ writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
 
 console.log(`Worker.......: ${workerName}`);
 console.log(`Banco D1.....: ${databaseName} (${databaseId})`);
-console.log(`Bucket R2....: ${bucketName}`);
+console.log(`Bucket R2....: ${r2Enabled === "0" ? "não habilitado (upload de imagem desligado)" : bucketName}`);

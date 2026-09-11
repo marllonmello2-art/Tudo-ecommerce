@@ -63,6 +63,17 @@ Workers, D1 e R2 no tamanho que este portal usa.
    - `AGENT_API_KEY` → invente uma senha longa (ou deixe para depois; sem ela a
      rota `POST /api/publish` responde 503 e o resto do portal funciona normal).
 
+### Passo 3.5 — Habilitar o R2 (opcional, para subir imagens)
+
+O upload de capas usa o R2. Ele tem 10 GB gratuitos, mas a Cloudflare pede uma
+ativação única em <https://dash.cloudflare.com> → **R2** → *Enable R2* (nessa
+tela ela costuma pedir um cartão, mesmo sem cobrar no plano gratuito).
+
+Não quer ativar agora? Pode pular: a publicação detecta que o R2 não está
+disponível e **sobe o portal sem ele**. Tudo funciona, menos o botão de enviar
+imagem — no editor você cola a URL da capa no campo "Ou cole uma URL". Quando
+ativar o R2, é só publicar de novo que o bucket entra sozinho.
+
 ### Passo 4 — Disparar a publicação
 
 O botão "Run workflow" só aparece depois que o arquivo do workflow estiver na
@@ -105,7 +116,8 @@ Actions de um GPT customizado fica em `https://SEU-ENDERECO/api/openapi.json`;
 a autenticação é do tipo *API Key*, no header `x-agent-api-key`.
 
 **Custos.** No plano gratuito da Cloudflare: 100 mil requisições por dia no
-Worker, 5 GB no D1 e 10 GB no R2. Um portal começando fica bem dentro disso.
+Worker, 5 GB no D1 e 10 GB no R2. Um portal começando fica bem dentro disso — o
+R2 é o único que pede a ativação do passo 3.5.
 
 ## Se algo falhar
 
@@ -115,3 +127,4 @@ Worker, 5 GB no D1 e 10 GB no R2. Um portal começando fica bem dentro disso.
 | `Authentication error [code: 10000]` | O token não tem uma das quatro permissões do passo 2 — recrie o token |
 | `Não consegui obter o id do banco D1` | O token está sem a permissão **D1 · Edit** |
 | Portal no ar mas escrito "Banco de dados não conectado" | O deploy subiu sem o binding: rode a publicação de novo, ela reaponta o Worker |
+| `Bucket R2 (BUCKET) não conectado` ao enviar imagem | O R2 não está habilitado na conta (passo 3.5) — enquanto isso, cole a URL da capa |
