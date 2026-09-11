@@ -1,0 +1,9 @@
+# Copie para `.dev.vars` (ignorado pelo Git) para rodar o portal localmente.
+# Em produção, cadastre os mesmos nomes como secrets do Worker.
+
+# Chave usada no cabeçalho x-agent-api-key da rota POST /api/publish.
+AGENT_API_KEY=troque-por-uma-chave-longa-e-aleatoria
+
+# Opcional: segredo de assinatura das sessões do painel. Sem ele, o portal
+# gera um segredo aleatório e guarda na tabela portal_settings.
+# ADMIN_SESSION_SECRET=troque-por-outra-chave-longa-e-aleatoria

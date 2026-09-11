@@ -144,3 +144,127 @@ The timeout defaults can be overridden for a controlled canary with `SITES_INSTA
 
 - [vinext Documentation](https://github.com/cloudflare/vinext)
 - [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+
+---
+
+# Diário Mello — portal de notícias
+
+O portal de notícias ocupa a raiz do site (`/`). A ferramenta de ecommerce que
+existia antes continua funcionando, agora em `/marketlab` (e só ela exige login
+por ChatGPT — o portal é público).
+
+## Identidade
+
+A marca vem do sobrenome da família: **Diário Mello**, com selo "DM", vermelho
+de jornal (`#c8102e`) e tipografia serifada nas manchetes. Todo texto de marca
+fica em `lib/portal/brand.ts` — mudar o nome, a assinatura ou a cor é editar um
+arquivo só.
+
+## Rotas públicas
+
+| Rota | O que faz |
+| --- | --- |
+| `/` | Capa: destaque (hero), últimas notícias e blocos por editoria |
+| `/editoria/[slug]` | Lista paginada da editoria, mais recentes primeiro |
+| `/noticia/[slug]` | Matéria: capa, autor, data, corpo, tags, compartilhamento e relacionadas |
+| `/busca?q=` | Busca por título, linha fina e corpo do texto |
+| `/sobre`, `/contato`, `/privacidade`, `/expediente` | Páginas institucionais |
+| `/sitemap.xml`, `/robots.txt` | SEO, gerados dinamicamente a partir do banco |
+
+Cada matéria publica meta tags próprias (title, description, Open Graph,
+Twitter Card) e dados estruturados `NewsArticle`.
+
+## Painel administrativo (`/admin`)
+
+- `/admin` — lista de matérias com filtros por editoria, status e busca, mais
+  contadores de publicadas, rascunhos e visualizações.
+- `/admin/materias/nova` e `/admin/materias/[id]` — editor com título, linha
+  fina, editoria, autor, tags, capa (upload para o R2), texto em Markdown com
+  pré-visualização, destaque da capa e agendamento.
+- `/admin/editorias` e `/admin/autores` — CRUD completo.
+
+**Primeiro acesso:** enquanto não existir nenhum usuário, `/admin/login` mostra
+o formulário "criar acesso do editor" e essa tela se fecha sozinha depois do
+primeiro cadastro. Não existe senha padrão no código.
+
+**Sessão:** cookie `dm_session` HttpOnly + Secure + SameSite=Lax, com token
+assinado em HMAC-SHA256 (12 horas). A senha é guardada como PBKDF2-SHA256 com
+150 mil iterações e salt por usuário. O segredo de assinatura vem do secret
+`ADMIN_SESSION_SECRET`; sem ele, o portal gera um segredo aleatório e guarda na
+tabela `portal_settings`.
+
+## API de publicação automatizada
+
+`POST /api/publish` — protegida pelo header `x-agent-api-key`, comparado em
+tempo constante com o secret `AGENT_API_KEY` do Worker. Sem o secret
+configurado a rota responde `503` (nunca aceita chamada aberta).
+
+```bash
+curl -X POST https://SEU-DOMINIO/api/publish \
+  -H "x-agent-api-key: $AGENT_API_KEY" \
+  -H "content-type: application/json" \
+  -d '{
+    "title": "Banco Central mantém juros",
+    "subtitle": "Decisão foi unânime",
+    "content": "## Cenário\n\nTexto em **Markdown**.",
+    "category_slug": "economia",
+    "author_name": "Redação Diário Mello",
+    "tags": ["juros", "copom"],
+    "status": "published"
+  }'
+```
+
+A resposta traz a matéria criada com o slug único e a URL pública final.
+Rotas auxiliares: `GET /api/categories` e `GET /api/authors` (públicas, sem
+chave) informam os valores válidos de `category_slug` e `author_id`.
+
+O schema **OpenAPI 3.1** fica em `GET /api/openapi.json`, com `servers` apontando
+para o próprio host — é só colar a URL em Actions de um GPT customizado e
+cadastrar a chave como API Key no header `x-agent-api-key`.
+
+## Banco de dados
+
+Schema Drizzle em `db/schema.ts`, migration em
+`drizzle/0002_portal_diario_mello.sql`: `articles`, `categories`, `authors`,
+`tags`, `article_tags`, `admin_users`, `newsletter_subscribers` e
+`portal_settings`.
+
+Como o ambiente pode entregar um D1 vazio, `lib/portal/db.ts` cria as tabelas
+com `IF NOT EXISTS` na primeira consulta e faz o seed inicial: as sete
+editorias (Política, Economia, Esportes, Cultura, Internacional, Tecnologia,
+Opinião), a redação padrão e três matérias de exemplo — apague-as pelo painel
+quando publicar as primeiras de verdade.
+
+Para gerar novas migrations depois de mexer no schema: `npm run db:generate`.
+
+## Imagens (R2)
+
+O upload do painel (`POST /api/admin/upload`) valida o tipo pelos magic bytes,
+limita a 6 MB e grava em `portal/capas/…` ou `portal/autores/…`. As imagens são
+servidas por `GET /api/media?key=…`, que só entrega objetos com o prefixo
+`portal/`.
+
+## Variáveis e secrets
+
+| Nome | Para quê |
+| --- | --- |
+| `AGENT_API_KEY` | Chave do header `x-agent-api-key` em `/api/publish` |
+| `ADMIN_SESSION_SECRET` | Opcional: assinatura das sessões do painel |
+
+Localmente, copie `.dev.vars.example` para `.dev.vars` (ignorado pelo Git). Em
+produção, cadastre como secrets do Worker.
+
+## Deploy
+
+O build (`npm run build`) gera `dist/` já com `dist/server/wrangler.json`,
+incluindo os bindings `DB` (D1) e `BUCKET` (R2) declarados em
+`.openai/hosting.json`. Para publicar pela CLI do Wrangler, use
+`wrangler.toml.example` como ponto de partida (crie o banco e o bucket, cole os
+ids, cadastre os secrets e rode `wrangler deploy`); para aplicar as migrations:
+`wrangler d1 migrations apply diario-mello --remote`.
+
+## Testes
+
+`node --test "tests/*.test.mjs"` roda contra o Worker construído e cobre a capa,
+o robots/sitemap, o bloqueio do painel sem sessão, a recusa de `/api/publish`
+sem chave, o schema OpenAPI e a área `/marketlab`.

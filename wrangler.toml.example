@@ -1,0 +1,34 @@
+# Exemplo de configuração para publicar o Diário Mello direto no Cloudflare
+# Workers pela CLI do Wrangler.
+#
+# ATENÇÃO: este arquivo é só um modelo (`.example`). A hospedagem usada por
+# este projeto injeta os bindings a partir de `.openai/hosting.json` e o build
+# já gera `dist/server/wrangler.json`. Copie para `wrangler.toml` apenas se for
+# assumir o deploy pela CLI — e nunca coloque secrets aqui.
+
+name = "diario-mello"
+main = "dist/server/index.js"
+compatibility_date = "2026-05-15"
+compatibility_flags = ["nodejs_compat"]
+
+# Arquivos estáticos gerados pelo build (dist/client).
+[assets]
+directory = "dist/client"
+binding = "ASSETS"
+
+# Banco do portal. Crie com: wrangler d1 create diario-mello
+[[d1_databases]]
+binding = "DB"
+database_name = "diario-mello"
+database_id = "cole-aqui-o-id-do-banco"
+migrations_dir = "drizzle"
+
+# Bucket das imagens (capas e fotos de autor).
+# Crie com: wrangler r2 bucket create diario-mello-midia
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "diario-mello-midia"
+
+# Secrets ficam FORA do arquivo, cadastrados por linha de comando:
+#   wrangler secret put AGENT_API_KEY          # chave do header x-agent-api-key
+#   wrangler secret put ADMIN_SESSION_SECRET   # opcional: assinatura das sessões

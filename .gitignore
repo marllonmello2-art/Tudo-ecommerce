@@ -41,3 +41,8 @@ next-env.d.ts
 /outputs/
 /work/
 *.tsbuildinfo
+
+# Cloudflare local dev secrets (nunca versionados)
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
