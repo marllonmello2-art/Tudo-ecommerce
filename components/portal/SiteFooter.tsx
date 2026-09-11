@@ -45,7 +45,6 @@ export function SiteFooter({ categories }: { categories: NavItem[] }) {
               <li><Link href="/busca">Busca</Link></li>
               <li><Link href="/sitemap.xml">Mapa do site</Link></li>
               <li><Link href="/admin">Painel do editor</Link></li>
-              <li><Link href="/marketlab">Tudo do Ecommerce</Link></li>
             </ul>
           </div>
         </div>

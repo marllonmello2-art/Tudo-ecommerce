@@ -1,0 +1,46 @@
+# Publicação autônoma do portal Diário Mello na Cloudflare.
+#
+# Roda sozinha a cada push na branch principal e também pode ser disparada à
+# mão em "Actions > Publicar Diário Mello > Run workflow".
+#
+# Secrets necessários no repositório (Settings > Secrets and variables > Actions):
+#   CLOUDFLARE_API_TOKEN   obrigatório — token com permissão de Workers, D1 e R2
+#   CLOUDFLARE_ACCOUNT_ID  obrigatório — id da conta Cloudflare
+#   AGENT_API_KEY          opcional — chave do header x-agent-api-key
+name: Publicar Diário Mello
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**/*.md"
+
+# Duas publicações ao mesmo tempo poderiam subir versões fora de ordem.
+concurrency:
+  group: publicar-diario-mello
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
+
+      - name: Publicar na Cloudflare
+        run: bash scripts/publish-portal.sh
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
+          PORTAL_WORKER_NAME: diario-mello
+          PORTAL_D1_NAME: diario-mello
+          PORTAL_R2_BUCKET: diario-mello-midia

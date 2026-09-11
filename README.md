@@ -268,3 +268,11 @@ ids, cadastre os secrets e rode `wrangler deploy`); para aplicar as migrations:
 `node --test "tests/*.test.mjs"` roda contra o Worker construído e cobre a capa,
 o robots/sitemap, o bloqueio do painel sem sessão, a recusa de `/api/publish`
 sem chave, o schema OpenAPI e a área `/marketlab`.
+
+## Publicação autônoma
+
+O passo a passo para colocar o portal no ar com banco e bucket próprios está em
+[PUBLICAR.md](PUBLICAR.md). Em resumo: `bash scripts/publish-portal.sh` cria os
+recursos, compila, publica e cadastra os secrets; o workflow
+`.github/workflows/publicar-portal.yml` faz isso sozinho a cada push na branch
+principal.
